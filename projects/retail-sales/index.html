@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Sales Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            color: #1a202c;
+        }
+
+        /* HEADER */
+        .header {
+            background: #1e3a5f;
+            color: white;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { font-size: 1.4rem; font-weight: 600; }
+        .header p  { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+        .header-right { font-size: 0.85rem; opacity: 0.75; text-align: right; }
+
+        /* MAIN LAYOUT */
+        .dashboard {
+            padding: 24px 32px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #2563eb;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .kpi-card.green  { border-left-color: #16a34a; }
+        .kpi-card.orange { border-left-color: #ea580c; }
+        .kpi-card.purple { border-left-color: #7c3aed; }
+
+        .kpi-label { font-size: 0.78rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; color: #1a202c; margin: 6px 0 4px; }
+        .kpi-change { font-size: 0.8rem; }
+        .kpi-change.up   { color: #16a34a; }
+        .kpi-change.down { color: #dc2626; }
+
+        /* CHARTS ROW */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 16px;
+        }
+
+        .chart-container { position: relative; }
+
+        /* BOTTOM ROW */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 8px 10px;
+            background: #f8fafc;
+            color: #718096;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #2d3748;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #f8fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+        .badge-green  { background: #dcfce7; color: #16a34a; }
+        .badge-orange { background: #ffedd5; color: #ea580c; }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .kpi-grid     { grid-template-columns: repeat(2, 1fr); }
+            .charts-row   { grid-template-columns: 1fr; }
+            .bottom-row   { grid-template-columns: 1fr; }
+            .dashboard    { padding: 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .header   { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div>
+        <h1>📦 Retail Sales Performance Dashboard</h1>
+        <p>UK Online Retailer · Jan 2010 – Dec 2011 · All figures in GBP (£)</p>
+    </div>
+    <div class="header-right">
+        <div>Data Source: UCI Online Retail Dataset</div>
+        <div>Last Updated: December 2011</div>
+    </div>
+</div>
+
+<div class="dashboard">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value">£9.75M</div>
+            <div class="kpi-change up">▲ 18.3% vs prior year</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label">Total Orders</div>
+            <div class="kpi-value">22,190</div>
+            <div class="kpi-change up">▲ 12.5% vs prior year</div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-label">Avg Order Value</div>
+            <div class="kpi-value">£439</div>
+            <div class="kpi-change up">▲ 5.2% vs prior year</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-label">Unique Customers</div>
+            <div class="kpi-value">4,372</div>
+            <div class="kpi-change up">▲ 9.8% vs prior year</div>
+        </div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-title">Monthly Revenue Trend (2010 vs 2011)</div>
+            <div class="chart-container">
+                <canvas id="revenueChart" height="110"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Revenue by Country</div>
+            <div class="chart-container">
+                <canvas id="countryChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+        <div class="chart-card">
+            <div class="chart-title">Revenue by Category</div>
+            <div class="chart-container">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">Top 5 Best Selling Products</div>
+            <div class="chart-container">
+                <canvas id="productChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">Top Countries by Orders</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th>Orders</th>
+                        <th>Revenue</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🇬🇧 United Kingdom</td>
+                        <td>18,473</td>
+                        <td>£7.98M</td>
+                        <td><span class="badge badge-green">Top</span></td>
+                    </tr>
+                    <tr>
+                        <td>🇩🇪 Germany</td>
+                        <td>603</td>
+                        <td>£228K</td>
+                        <td><span class="badge badge-blue">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>🇫🇷 France</td>
+                        <td>461</td>
+                        <td>£197K</td>
+                        <td><span class="badge badge-blue">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>🇮🇪 Ireland</td>
+                        <td>355</td>
+                        <td>£263K</td>
+                        <td><span class="badge badge-blue">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>🇳🇱 Netherlands</td>
+                        <td>101</td>
+                        <td>£285K</td>
+                        <td><span class="badge badge-orange">Growing</span></td>
+                    </tr>
+                    <tr>
+                        <td>🇦🇺 Australia</td>
+                        <td>83</td>
+                        <td>£138K</td>
+                        <td><span class="badge badge-orange">Growing</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">Built by VictorOk1 · Data: UCI Online Retail Dataset · Portfolio: victorok1.github.io</div>
+
+<!-- CHARTS SCRIPT -->
+<script>
+const blue   = '#2563eb';
+const green  = '#16a34a';
+const orange = '#ea580c';
+const purple = '#7c3aed';
+const light  = '#93c5fd';
+
+// 1. REVENUE TREND
+new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [
+            {
+                label: '2010',
+                data: [285000, 241000, 318000, 295000, 340000, 362000, 298000, 321000, 445000, 512000, 698000, 421000],
+                borderColor: light,
+                backgroundColor: 'rgba(147,197,253,0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+                pointRadius: 3
+            },
+            {
+                label: '2011',
+                data: [341000, 298000, 387000, 412000, 398000, 441000, 378000, 502000, 589000, 748000, 1142000, 0],
+                borderColor: blue,
+                backgroundColor: 'rgba(37,99,235,0.08)',
+                borderWidth: 2.5,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3
+            }
+        ]
+    },
+    options: {
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+            y: {
+                ticks: {
+                    callback: v => '£' + (v/1000).toFixed(0) + 'K',
+                    font: { size: 10 }
+                },
+                grid: { color: '#f1f5f9' }
+            },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+    }
+});
+
+// 2. COUNTRY DONUT
+new Chart(document.getElementById('countryChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['UK', 'Germany', 'France', 'Ireland', 'Netherlands', 'Others'],
+        datasets: [{
+            data: [81.8, 2.3, 2.0, 2.7, 2.9, 8.3],
+            backgroundColor: [blue, green, orange, purple, '#0891b2', '#94a3b8'],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 10 } },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + '%' } }
+        }
+    }
+});
+
+// 3. CATEGORY BAR
+new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Home Decor', 'Gifts', 'Seasonal', 'Novelty', 'Kitchenware', 'Stationery'],
+        datasets: [{
+            label: 'Revenue (£)',
+            data: [2980000, 2340000, 1870000, 1240000, 890000, 430000],
+            backgroundColor: [blue, green, orange, purple, '#0891b2', '#94a3b8'],
+            borderRadius: 6
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { callback: v => '£' + (v/1000).toFixed(0) + 'K', font: { size: 9 } },
+                grid: { color: '#f1f5f9' }
+            },
+            y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+    }
+});
+
+// 4. TOP PRODUCTS
+new Chart(document.getElementById('productChart'), {
+    type: 'bar',
+    data: {
+        labels: ['REGENCY CAKE STAND', 'WHITE HANGING HEART', 'JUMBO BAG RED RETROSPOT', 'PARTY BUNTING', 'LUNCH BAG RED RETROSPOT'],
+        datasets: [{
+            label: 'Units Sold',
+            data: [36042, 35317, 24753, 21048, 20128],
+            backgroundColor: blue,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: { callback: v => v.toLocaleString(), font: { size: 9 } },
+                grid: { color: '#f1f5f9' }
+            },
+            y: { ticks: { font: { size: 9 } }, grid: { display: false } }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
